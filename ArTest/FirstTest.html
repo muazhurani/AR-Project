@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>Basic Scene</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+	<link type="text/css" rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/three@0.133.0/build/three.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tweakpane@3.1.6/dist/tweakpane.min.js"></script>
+  <style>
+	.gui-button {
+	  right: 20px;
+	  position: absolute;
+	  bottom: 20px;
+	  padding: 12px 6px;
+	  border: 1px solid rgb(255, 255, 255);
+	  border-radius: 4px;
+	  background: rgba(0, 0, 0, 0.1);
+	  color: rgb(255, 255, 255);
+	  font: 13px sans-serif;
+	  text-align: center;
+	  opacity: 0.5;
+	  outline: none;
+	  z-index: 999;
+	  cursor: pointer;
+	  left: calc(80% - 50px);
+	  width: 100px;
+	}
+  </style>
+
+
+</head>
+
+<body>
+<button id="color-change-button" class="gui-button">
+	Color
+</button>
+	
+	<script type="module">
+
+	import { ARButton } from 'https://threejs.org/examples/jsm/webxr/ARButton.js';
+	import Stats from "https://unpkg.com/three@0.133.0/examples/jsm/libs/stats.module.js";
+
+		let camera, scene, renderer;
+    	let mesh;
+		let pane;
+		let stats;
+
+    	console.log(Tweakpane);
+
+
+		// we specify the parameters we want to show up in the gui and starting values for the mesh
+      	// right now just x, y, z for the position of the model
+      	const PARAMS = {
+        	x: 0,
+        	y: 0.15,
+        	z: -0.5
+      	};
+
+		function getRandomInt(minimum, maximum) {
+        const minInt = Math.ceil(minimum);
+        const maxInt = Math.floor(maximum);
+        return Math.floor(Math.random() * (maxInt - minInt + 1)) + minInt;
+     	}
+
+		setupGui();	
+		init();
+		animate();
+
+		function createStats(){
+			stats = new Stats();
+			stats.setMode(0);
+
+			stats.domElement.style.position = 'absolute';
+			stats.domElement.style.left = '0';
+			stats.domElement.style.top = '0';
+		}
+
+		function setupGui() {
+        // first we create the gui panel
+        pane = new Tweakpane.Pane();
+        pane.containerElem_.style.zIndex = "10000"; // we need to set the zIndex so it shows up on desktop correctly
+        
+        // finally you customize the parameters
+        // min is the minimum value the slider will go, max is the max value the slider will go, step is the increase at each change in the slider
+        // remember these values are in meters in WebXR
+        pane.addInput(
+          PARAMS, 'x',
+          {min: -5, max: 5, step: 0.1} 
+        );
+        pane.addInput(
+          PARAMS, 'y',
+          {min: -5, max: 5, step: 0.1}
+        );
+        pane.addInput(
+          PARAMS, 'z',
+          {min: -5, max: 5, step: 0.1}
+        );
+        
+        // more types of params and options can be found:
+        // https://cocopon.github.io/tweakpane/
+      }
+
+
+		function init() {
+			const container = document.createElement('div');
+			document.body.appendChild(container);
+
+			// All three.js scenes need three things: a scene, a camera, and a renderer
+			// For more info read: https://threejs.org/docs/#manual/en/introduction/Creating-a-scene
+
+			// #1 create the scene, although there's nothing in it just yet
+			scene = new THREE.Scene();
+			console.log(scene);
+			// #2 create the camera
+			// From documentation: https://threejs.org/docs/#api/en/cameras/PerspectiveCamera
+			// PerspectiveCamera( fov : Number, aspect : Number, near : Number, far : Number )
+			// fov — Camera frustum vertical field of view.
+			// aspect — Camera frustum aspect ratio.
+			// near — Camera frustum near plane.
+			// far — Camera frustum far plane.
+
+			camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 40);
+			console.log(camera);
+			// #3 Pick a three.js renderer
+     		// Documentation: https://threejs.org/docs/#api/en/renderers/WebGLRenderer
+	  		renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+			renderer.setPixelRatio(window.devicePixelRatio);
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			renderer.xr.enabled = true;
+			container.appendChild(renderer.domElement);
+
+			// Everything hereafter is optional things we want to add to the scene
+			// Add a light to the cene
+			// Documentation: https://threejs.org/docs/index.html#api/en/lights/HemisphereLight
+			// HemisphereLight( skyColor : Integer, groundColor : Integer, intensity : Float )
+			// skyColor - (optional) hexadecimal color of the sky. Default is 0xffffff.
+			// groundColor - (optional) hexadecimal color of the ground. Default is 0xffffff.
+			// intensity - (optional) numeric value of the light's strength/intensity. Default is 1.
+
+
+	  		const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+	  		light.position.set(0.5, 1, 0.25);
+			scene.add(light);
+			console.log(light);
+			// Add a polyhedron shape to the scene
+			// Documentation: https://threejs.org/docs/#api/en/geometries/IcosahedronGeometry
+			// IcosahedronGeometry(radius : Float, detail : Integer)
+			// radius — Default is 1.
+			// detail — Default is 0. Setting this to a value greater than 0 adds more vertices making it no 
+			//longer an icosahedron. When detail is greater than 1, it's effectively a sphere.
+			
+
+			const geometry = new THREE.IcosahedronGeometry(0.1, 1);
+			const material = new THREE.MeshPhongMaterial({
+				color: new THREE.Color("rgb(226,35,213)"),
+				shininess: 6,
+				flatShading: true,
+				transparent: 1,
+				opacity: 0.8
+
+
+			});
+			mesh = new THREE.Mesh(geometry, material);
+			scene.add(mesh);
+			mesh.position.set(PARAMS.x, PARAMS.y, PARAMS.z);
+
+			const button = ARButton.createButton(renderer, {
+          		optionalFeatures: ["dom-overlay", "dom-overlay-for-handheld-ar"],
+          		domOverlay: {
+            		root: document.body
+          		}
+        	});
+			pane.on('change', (ev) => {
+				const type = ev.presetKey;
+				const value = ev.value;
+				console.log(type, ":", value);
+				
+				switch(type) {
+					case 'x':
+						mesh.position.x = value;
+						break;
+					case 'y':
+						mesh.position.y = value;
+						break;
+					case 'z':
+						mesh.position.z = value;
+						break;
+					default:
+						break;
+          	}
+
+			});
+
+			document.body.appendChild(button);
+			createStats();
+			document.body.appendChild(stats.domElement);
+
+			//cube
+			const geometry2 = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+			const material2 = new THREE.MeshBasicMaterial({ color: 0xe06666 });
+			const cubeMesh = new THREE.Mesh(geometry2, material2);
+			scene.add(cubeMesh);
+			cubeMesh.position.z = -1;
+			cubeMesh.position.y = -0.1
+
+			const colorChangeButton = document.getElementById('color-change-button');
+
+			// The following code installs an event handler to selectively suppress XR events for that region, 
+        	// while continuing to generate XR events for other parts of the DOM overlay that are treated as 
+        	// transparent for interaction purposes.
+        	colorChangeButton.addEventListener('beforexrselect', ev => ev.preventDefault());
+
+			colorChangeButton.addEventListener('click', (event) => {
+				const randomColor = `rgb(${getRandomInt(0, 360)}, ${getRandomInt(0, 360)}, ${getRandomInt(0, 360)})`;
+				mesh.material.color = new THREE.Color(randomColor);
+			});
+			
+
+
+			window.addEventListener('resize', onWindowResize, false);
+		}
+
+		function onWindowResize() {
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+
+			renderer.setSize(window.innerWidth, window.innerHeight);
+		}
+
+		function animate() {
+			// here we set the render function to be called in a loop
+			renderer.setAnimationLoop(render);
+		}
+
+		function render() {
+			renderer.render(scene, camera);
+			stats.update();
+    	}
+
+	</script>
+</body>
+
+</html>

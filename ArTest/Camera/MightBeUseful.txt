@@ -1,0 +1,15 @@
+<a-marker-camera preset='hiro'></a-marker-camera>
+embedded arjs
+
+    <script>
+      // Wait for the model to load
+      const container = document.querySelector('#container');
+      container.addEventListener('model-loaded', () => {
+        // Get the height of the model
+        const bbox = new THREE.Box3().setFromObject(container.object3D);
+        const height = bbox.max.y - bbox.min.y;
+  
+        // Set the position of the model at ground level
+        container.object3D.position.set(0, -height / 2, 0);
+      });
+    </script>

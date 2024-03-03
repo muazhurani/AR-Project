@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+<style>a-scene {
+    height: 300px;
+    width: 600px;
+  }</style>
+
+    </head>
+  <body>
+    <div id="myEmbeddedScene">
+      <a-scene embedded webxr="optionalFeatures:  hit-test;" ar-hit-test="target:#container;">
+        <a-assets>
+            <a-asset-item id="placePic" src="/Assets/Textures/index.webp"></a-asset-item>
+          <a-asset-item id="6mContainer" src="/Assets/container/6m/gltf/6m.gltf"></a-asset-item>
+          <a-asset-item id="3,3mContainer" src="/Assets/container/3,3m/gltf/3,3m.gltf"></a-asset-item>
+          <a-asset-item id="3,1mContainer" src="/Assets/container/3,1m/gltf/3,1m.gltf"></a-asset-item>
+        </a-assets>
+        <a-entity id="container"
+                gltf-model="#3,3mContainer"
+                position="0 0 -5"
+                rotation="0 0 0"
+                scale="0.01 0.01 0.01"
+                target-marker
+                mover
+                animation="property: rotation; to: 0 360 0; easing: linear; dur:10000; loop:false">
+        </a-entity>
+
+      </a-scene>
+    </div>
+  </body>
+</html>
